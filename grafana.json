@@ -1,0 +1,51 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "User Analytics Live Dashboard",
+    "tags": ["analytics", "real-time"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Events Per Minute",
+        "type": "timeseries",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [{
+          "rawSql": "SELECT time_bucket('1 minute', timestamp) as time, COUNT(*) as events FROM events WHERE $__timeFilter(timestamp) GROUP BY time ORDER BY time",
+          "format": "time_series"
+        }]
+      },
+      {
+        "id": 2,
+        "title": "Active Users",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+        "targets": [{
+          "rawSql": "SELECT COUNT(DISTINCT user_id) as active_users FROM events WHERE timestamp > NOW() - INTERVAL '5 minutes'",
+          "format": "table"
+        }]
+      },
+      {
+        "id": 3,
+        "title": "Avg Engagement",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "targets": [{
+          "rawSql": "SELECT ROUND(AVG(duration), 2) as avg_duration FROM events WHERE timestamp > NOW() - INTERVAL '5 minutes' AND duration > 0",
+          "format": "table"
+        }]
+      },
+      {
+        "id": 4,
+        "title": "Top Elements",
+        "type": "barchart",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [{
+          "rawSql": "SELECT element, COUNT(*) as interactions FROM events WHERE $__timeFilter(timestamp) GROUP BY element ORDER BY interactions DESC LIMIT 8",
+          "format": "table"
+        }]
+      }
+    ],
+    "time": {"from": "now-15m", "to": "now"}
+  }
+}

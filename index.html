@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body class="bg-gray-900 text-gray-100">
+    <div class="container mx-auto p-6">
+      <h1 class="text-3xl font-bold mb-6 text-emerald-400">
+        User Engagement Analytics
+      </h1>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-gray-800 p-4 rounded-2xl shadow-lg border-l-4 border-emerald-500">
+          <h3 class="font-medium text-gray-400">Active Users (5m)</h3>
+          <p class="text-4xl font-bold text-emerald-400" id="activeUsers">0</p>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-2xl shadow-lg border-l-4 border-emerald-500">
+          <h3 class="font-medium text-gray-400">Events/Min</h3>
+          <p class="text-4xl font-bold text-emerald-400" id="eventsMin">0</p>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-2xl shadow-lg border-l-4 border-emerald-500">
+          <h3 class="font-medium text-gray-400">Avg Engagement</h3>
+          <p class="text-4xl font-bold text-emerald-400" id="avgEngagement">0s</p>
+        </div>
+      </div>
+
+      <!-- Charts + List -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-gray-800 p-4 rounded-2xl shadow">
+          <h3 class="font-semibold mb-4 text-gray-200">Top Interactive Elements</h3>
+          <ul id="topElements" class="divide-y divide-gray-700">
+            <!-- Will be populated by JavaScript -->
+          </ul>
+        </div>
+
+        <div class="bg-gray-800 p-4 rounded-2xl shadow">
+          <h3 class="font-semibold mb-4 text-gray-200">Engagement Distribution</h3>
+          <canvas id="engagementChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="mt-8 bg-gray-800 rounded-2xl shadow p-4">
+        <h3 class="font-semibold mb-4 text-gray-200">Send Test Event</h3>
+        <div class="flex flex-wrap gap-3">
+          <button
+            onclick="sendEvent('play', 'video_player')"
+            class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg shadow"
+          >
+            Play Video
+          </button>
+          <button
+            onclick="sendEvent('pause', 'video_player')"
+            class="bg-yellow-600 hover:bg-yellow-500 text-white px-4 py-2 rounded-lg shadow"
+          >
+            Pause Video
+          </button>
+          <button
+            onclick="sendEvent('click', 'subscribe_button')"
+            class="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg shadow"
+          >
+            Subscribe
+          </button>
+          <button
+            onclick="sendEvent('click', 'like_button')"
+            class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg shadow"
+          >
+            Like
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let engagementChart = null;
+
+      function fetchMetrics() {
+        fetch("/metrics")
+          .then((response) => response.json())
+          .then((data) => updateDashboard(data));
+      }
+
+      function updateDashboard(data) {
+        document.getElementById("activeUsers").innerText = data.active_users;
+        document.getElementById("eventsMin").innerText =
+          data.events_per_min.toFixed(1);
+        document.getElementById("avgEngagement").innerText =
+          `${data.avg_duration.toFixed(1)}s`;
+
+        const topElementsList = document.getElementById("topElements");
+        topElementsList.innerHTML = "";
+        data.top_elements.forEach((item) => {
+          const li = document.createElement("li");
+          li.className = "py-2 flex justify-between text-gray-300";
+          li.innerHTML = `<span class="font-medium">${item.element}</span><span class="text-gray-500">${item.count} interactions</span>`;
+          topElementsList.appendChild(li);
+        });
+
+        updateChart(data);
+      }
+
+      function updateChart(data) {
+        const ctx = document.getElementById("engagementChart").getContext("2d");
+
+        if (engagementChart) {
+          engagementChart.destroy();
+        }
+
+        engagementChart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: data.top_elements.map((e) => e.element),
+            datasets: [
+              {
+                data: data.top_elements.map((e) => e.count),
+                backgroundColor: [
+                  "#10B981", // emerald
+                  "#3B82F6", // blue
+                  "#EF4444", // red
+                  "#F59E0B", // amber
+                  "#8B5CF6", // purple
+                ],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: "#d1d5db", // gray-300
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function sendEvent(action, element) {
+        const event = {
+          user_id: "user_" + Math.floor(Math.random() * 1000),
+          action: action,
+          element: element,
+          duration: action === "play" ? Math.random() * 10 : 0,
+        };
+
+        fetch("/event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(event),
+        });
+      }
+
+      function simulateMultipleUsers() {
+        const actions = ["play", "pause", "click", "hover"];
+        const elements = [
+          "video_player",
+          "subscribe_button",
+          "like_button",
+          "share_button",
+        ];
+
+        setInterval(() => {
+          const event = {
+            user_id: "user_" + Math.floor(Math.random() * 100),
+            action: actions[Math.floor(Math.random() * actions.length)],
+            element: elements[Math.floor(Math.random() * elements.length)],
+            duration: Math.random() * 15,
+          };
+
+          fetch("/event", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(event),
+          });
+        }, 500);
+      }
+
+      setInterval(fetchMetrics, 3000);
+      fetchMetrics();
+      simulateMultipleUsers();
+    </script>
+  </body>
+</html>
