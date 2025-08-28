@@ -1,106 +1,252 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go-Grafana Analytics Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+      body { font-family: 'Inter', sans-serif; }
+      .gradient-bg { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+      .card-hover { transition: all 0.3s ease; }
+      .card-hover:hover { transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
+      .pulse-animation { animation: pulse 2s infinite; }
+      @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+      .status-indicator { width: 8px; height: 8px; border-radius: 50%; }
+      .status-online { background-color: #10b981; }
+      .status-offline { background-color: #ef4444; }
+    </style>
   </head>
-  <body class="bg-gray-900 text-gray-100">
-    <div class="container mx-auto p-6">
-      <h1 class="text-3xl font-bold mb-6 text-emerald-400">
-        User Engagement Analytics
-      </h1>
+  <body class="gradient-bg text-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700/50 sticky top-0 z-50">
+      <div class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+              <i data-lucide="activity" class="w-5 h-5 text-white"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white">Go-Grafana Analytics</h1>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="status-indicator status-online pulse-animation"></div>
+            <span class="text-sm text-gray-400">Live</span>
+          </div>
+        </div>
+      </div>
+    </header>
 
-      <!-- Stats -->
+    <div class="container mx-auto px-6 py-8">
+      <!-- Key Metrics -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-gray-800 p-4 rounded-2xl shadow-lg border-l-4 border-emerald-500">
-          <h3 class="font-medium text-gray-400">Active Users (5m)</h3>
-          <p class="text-4xl font-bold text-emerald-400" id="activeUsers">0</p>
+        <div class="bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700/50 card-hover">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-2 bg-emerald-500/20 rounded-lg">
+              <i data-lucide="users" class="w-6 h-6 text-emerald-400"></i>
+            </div>
+            <span class="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded-full">5min</span>
+          </div>
+          <h3 class="font-medium text-gray-400 mb-1">Active Users</h3>
+          <p class="text-3xl font-bold text-emerald-400" id="activeUsers">0</p>
+          <div class="mt-2 flex items-center text-sm">
+            <i data-lucide="trending-up" class="w-4 h-4 text-green-400 mr-1"></i>
+            <span class="text-green-400">+12%</span>
+            <span class="text-gray-500 ml-1">vs last hour</span>
+          </div>
         </div>
 
-        <div class="bg-gray-800 p-4 rounded-2xl shadow-lg border-l-4 border-emerald-500">
-          <h3 class="font-medium text-gray-400">Events/Min</h3>
-          <p class="text-4xl font-bold text-emerald-400" id="eventsMin">0</p>
+        <div class="bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700/50 card-hover">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-2 bg-blue-500/20 rounded-lg">
+              <i data-lucide="zap" class="w-6 h-6 text-blue-400"></i>
+            </div>
+            <span class="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded-full">real-time</span>
+          </div>
+          <h3 class="font-medium text-gray-400 mb-1">Events/Min</h3>
+          <p class="text-3xl font-bold text-blue-400" id="eventsMin">0</p>
+          <div class="mt-2 flex items-center text-sm">
+            <i data-lucide="activity" class="w-4 h-4 text-blue-400 mr-1"></i>
+            <span class="text-gray-400">Peak: 1.2k/min</span>
+          </div>
         </div>
 
-        <div class="bg-gray-800 p-4 rounded-2xl shadow-lg border-l-4 border-emerald-500">
-          <h3 class="font-medium text-gray-400">Avg Engagement</h3>
-          <p class="text-4xl font-bold text-emerald-400" id="avgEngagement">0s</p>
+        <div class="bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700/50 card-hover">
+          <div class="flex items-center justify-between mb-4">
+            <div class="p-2 bg-purple-500/20 rounded-lg">
+              <i data-lucide="clock" class="w-6 h-6 text-purple-400"></i>
+            </div>
+            <span class="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded-full">avg</span>
+          </div>
+          <h3 class="font-medium text-gray-400 mb-1">Avg Engagement</h3>
+          <p class="text-3xl font-bold text-purple-400" id="avgEngagement">0s</p>
+          <div class="mt-2 flex items-center text-sm">
+            <i data-lucide="trending-up" class="w-4 h-4 text-green-400 mr-1"></i>
+            <span class="text-green-400">+5.2s</span>
+            <span class="text-gray-500 ml-1">vs yesterday</span>
+          </div>
         </div>
       </div>
 
-      <!-- Charts + List -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-gray-800 p-4 rounded-2xl shadow">
-          <h3 class="font-semibold mb-4 text-gray-200">Top Interactive Elements</h3>
-          <ul id="topElements" class="divide-y divide-gray-700">
+      <!-- Charts and Analytics -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Top Interactive Elements -->
+        <div class="bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700/50 card-hover">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="font-semibold text-gray-200 flex items-center">
+              <i data-lucide="mouse-pointer" class="w-5 h-5 mr-2 text-emerald-400"></i>
+              Top Interactive Elements
+            </h3>
+            <button class="text-gray-400 hover:text-white transition-colors">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div id="topElements" class="space-y-3">
             <!-- Will be populated by JavaScript -->
-          </ul>
+          </div>
         </div>
 
-        <div class="bg-gray-800 p-4 rounded-2xl shadow">
-          <h3 class="font-semibold mb-4 text-gray-200">Engagement Distribution</h3>
-          <canvas id="engagementChart" width="400" height="200"></canvas>
+        <!-- Engagement Distribution Chart -->
+        <div class="bg-gray-800/60 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-gray-700/50 card-hover">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="font-semibold text-gray-200 flex items-center">
+              <i data-lucide="pie-chart" class="w-5 h-5 mr-2 text-blue-400"></i>
+              Engagement Distribution
+            </h3>
+            <div class="flex space-x-2">
+              <button class="text-gray-400 hover:text-white transition-colors text-sm bg-gray-700/50 px-3 py-1 rounded-lg">
+                1H
+              </button>
+              <button class="text-white bg-emerald-500/20 text-sm px-3 py-1 rounded-lg">
+                24H
+              </button>
+            </div>
+          </div>
+          <div class="relative">
+            <canvas id="engagementChart" width="400" height="300"></canvas>
+          </div>
         </div>
       </div>
 
-      <!-- Buttons -->
-      <div class="mt-8 bg-gray-800 rounded-2xl shadow p-4">
-        <h3 class="font-semibold mb-4 text-gray-200">Send Test Event</h3>
-        <div class="flex flex-wrap gap-3">
+      <!-- Interactive Test Panel -->
+      <div class="bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-700/50 p-6 card-hover">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="font-semibold text-gray-200 flex items-center">
+            <i data-lucide="play-circle" class="w-5 h-5 mr-2 text-emerald-400"></i>
+            Event Simulator
+          </h3>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-400">Auto-simulation:</span>
+            <button id="autoSimToggle" class="relative inline-flex h-6 w-11 items-center rounded-full bg-emerald-600 transition-colors">
+              <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button
             onclick="sendEvent('play', 'video_player')"
-            class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg shadow"
+            class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 flex items-center justify-center space-x-2"
           >
-            Play Video
+            <i data-lucide="play" class="w-4 h-4"></i>
+            <span>Play Video</span>
           </button>
           <button
             onclick="sendEvent('pause', 'video_player')"
-            class="bg-yellow-600 hover:bg-yellow-500 text-white px-4 py-2 rounded-lg shadow"
+            class="bg-yellow-600 hover:bg-yellow-500 text-white px-4 py-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 flex items-center justify-center space-x-2"
           >
-            Pause Video
+            <i data-lucide="pause" class="w-4 h-4"></i>
+            <span>Pause Video</span>
           </button>
           <button
             onclick="sendEvent('click', 'subscribe_button')"
-            class="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg shadow"
+            class="bg-red-600 hover:bg-red-500 text-white px-4 py-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 flex items-center justify-center space-x-2"
           >
-            Subscribe
+            <i data-lucide="bell" class="w-4 h-4"></i>
+            <span>Subscribe</span>
           </button>
           <button
             onclick="sendEvent('click', 'like_button')"
-            class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg shadow"
+            class="bg-pink-600 hover:bg-pink-500 text-white px-4 py-3 rounded-xl shadow-lg transition-all duration-200 hover:scale-105 flex items-center justify-center space-x-2"
           >
-            Like
+            <i data-lucide="heart" class="w-4 h-4"></i>
+            <span>Like</span>
           </button>
         </div>
       </div>
     </div>
 
     <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+
       let engagementChart = null;
+      let autoSimulation = true;
+      let simulationInterval = null;
 
       function fetchMetrics() {
         fetch("/metrics")
           .then((response) => response.json())
-          .then((data) => updateDashboard(data));
+          .then((data) => updateDashboard(data))
+          .catch((error) => console.error('Error fetching metrics:', error));
       }
 
       function updateDashboard(data) {
-        document.getElementById("activeUsers").innerText = data.active_users;
-        document.getElementById("eventsMin").innerText =
-          data.events_per_min.toFixed(1);
-        document.getElementById("avgEngagement").innerText =
-          `${data.avg_duration.toFixed(1)}s`;
+        // Update metrics with smooth animation
+        animateValue("activeUsers", parseInt(document.getElementById("activeUsers").innerText) || 0, data.active_users, 1000);
+        animateValue("eventsMin", parseFloat(document.getElementById("eventsMin").innerText) || 0, data.events_per_min, 1000, 1);
+        animateValue("avgEngagement", parseFloat(document.getElementById("avgEngagement").innerText) || 0, data.avg_duration, 1000, 1, 's');
 
-        const topElementsList = document.getElementById("topElements");
-        topElementsList.innerHTML = "";
-        data.top_elements.forEach((item) => {
-          const li = document.createElement("li");
-          li.className = "py-2 flex justify-between text-gray-300";
-          li.innerHTML = `<span class="font-medium">${item.element}</span><span class="text-gray-500">${item.count} interactions</span>`;
-          topElementsList.appendChild(li);
-        });
-
+        updateTopElements(data.top_elements);
         updateChart(data);
+      }
+
+      function animateValue(elementId, start, end, duration, decimals = 0, suffix = '') {
+        const element = document.getElementById(elementId);
+        const range = end - start;
+        const increment = range / (duration / 16);
+        let current = start;
+        
+        const timer = setInterval(() => {
+          current += increment;
+          if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+            current = end;
+            clearInterval(timer);
+          }
+          element.textContent = current.toFixed(decimals) + suffix;
+        }, 16);
+      }
+
+      function updateTopElements(elements) {
+        const container = document.getElementById("topElements");
+        container.innerHTML = "";
+        
+        elements.forEach((item, index) => {
+          const div = document.createElement("div");
+          div.className = "flex items-center justify-between p-3 bg-gray-700/30 rounded-lg border border-gray-600/30";
+          
+          const colors = ['text-emerald-400', 'text-blue-400', 'text-purple-400', 'text-yellow-400', 'text-pink-400'];
+          const icons = ['mouse-pointer', 'click', 'eye', 'heart', 'share'];
+          
+          div.innerHTML = `
+            <div class="flex items-center space-x-3">
+              <div class="p-2 bg-gray-600/30 rounded-lg">
+                <i data-lucide="${icons[index] || 'mouse-pointer'}" class="w-4 h-4 ${colors[index] || 'text-gray-400'}"></i>
+              </div>
+              <span class="font-medium text-gray-200">${item.element}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-lg font-semibold ${colors[index] || 'text-gray-400'}">${item.count}</span>
+              <div class="text-xs text-gray-500">interactions</div>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+        
+        // Re-initialize icons for new elements
+        lucide.createIcons();
       }
 
       function updateChart(data) {
@@ -120,23 +266,38 @@
                 backgroundColor: [
                   "#10B981", // emerald
                   "#3B82F6", // blue
-                  "#EF4444", // red
-                  "#F59E0B", // amber
                   "#8B5CF6", // purple
+                  "#F59E0B", // amber
+                  "#EF4444", // red
                 ],
+                borderWidth: 0,
+                hoverBorderWidth: 2,
+                hoverBorderColor: "#ffffff",
               },
             ],
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
               legend: {
                 position: "bottom",
                 labels: {
-                  color: "#d1d5db", // gray-300
+                  color: "#d1d5db",
+                  padding: 20,
+                  usePointStyle: true,
+                  pointStyle: 'circle',
                 },
               },
+              tooltip: {
+                backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                titleColor: '#f9fafb',
+                bodyColor: '#d1d5db',
+                borderColor: '#374151',
+                borderWidth: 1,
+              }
             },
+            cutout: '60%',
           },
         });
       }
@@ -153,10 +314,12 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(event),
-        });
+        }).catch((error) => console.error('Error sending event:', error));
       }
 
       function simulateMultipleUsers() {
+        if (!autoSimulation) return;
+        
         const actions = ["play", "pause", "click", "hover"];
         const elements = [
           "video_player",
@@ -165,25 +328,49 @@
           "share_button",
         ];
 
-        setInterval(() => {
-          const event = {
-            user_id: "user_" + Math.floor(Math.random() * 100),
-            action: actions[Math.floor(Math.random() * actions.length)],
-            element: elements[Math.floor(Math.random() * elements.length)],
-            duration: Math.random() * 15,
-          };
+        const event = {
+          user_id: "user_" + Math.floor(Math.random() * 100),
+          action: actions[Math.floor(Math.random() * actions.length)],
+          element: elements[Math.floor(Math.random() * elements.length)],
+          duration: Math.random() * 15,
+        };
 
-          fetch("/event", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(event),
-          });
-        }, 500);
+        fetch("/event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(event),
+        }).catch((error) => console.error('Error in simulation:', error));
       }
 
+      function toggleAutoSimulation() {
+        autoSimulation = !autoSimulation;
+        const toggle = document.getElementById('autoSimToggle');
+        const span = toggle.querySelector('span');
+        
+        if (autoSimulation) {
+          toggle.classList.add('bg-emerald-600');
+          toggle.classList.remove('bg-gray-600');
+          span.classList.add('translate-x-6');
+          span.classList.remove('translate-x-1');
+          simulationInterval = setInterval(simulateMultipleUsers, 500);
+        } else {
+          toggle.classList.remove('bg-emerald-600');
+          toggle.classList.add('bg-gray-600');
+          span.classList.remove('translate-x-6');
+          span.classList.add('translate-x-1');
+          if (simulationInterval) {
+            clearInterval(simulationInterval);
+          }
+        }
+      }
+
+      // Event listeners
+      document.getElementById('autoSimToggle').addEventListener('click', toggleAutoSimulation);
+
+      // Initialize
       setInterval(fetchMetrics, 3000);
       fetchMetrics();
-      simulateMultipleUsers();
+      simulationInterval = setInterval(simulateMultipleUsers, 500);
     </script>
   </body>
 </html>
