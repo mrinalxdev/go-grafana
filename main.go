@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
 	// "os"
 	// "time"
 
@@ -40,13 +41,13 @@ func main() {
 	go workers.ProcessEvents(rdb, db)
 
 	// Setup HTTP handlers
-	http.HandleFunc("/event", handlers.EventHandler(rdb))
-	http.HandleFunc("/metrics", handlers.MetricsHandler(db))
-	http.HandleFunc("/", serveDashboard)
+	http.Handle("/event", cors(http.HandlerFunc(handlers.EventHandler(rdb))))
+	http.Handle("/metrics", cors(http.HandlerFunc(handlers.MetricsHandler(db))))
+	http.Handle("/", cors(http.HandlerFunc(serveDashboard)))
 
 	// Start server
-	fmt.Println("Server starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("Server starting on :8081")
+	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 
 // func initDB(db *sql.DB) error {
@@ -68,7 +69,7 @@ func main() {
 // 	// Create materialized view
 // 	_, err = db.Exec(`
 // 		CREATE MATERIALIZED VIEW IF NOT EXISTS user_engagement AS
-// 		SELECT 
+// 		SELECT
 // 			user_id,
 // 			COUNT(*) AS total_events,
 // 			SUM(duration) AS total_duration,
@@ -78,8 +79,6 @@ func main() {
 // 	`)
 // 	return err
 // }
-
-
 
 // func initDB(db *sql.DB) error {
 //     // Create events table
@@ -106,7 +105,7 @@ func main() {
 //     // Create materialized view
 //     _, err = db.Exec(`
 //         CREATE MATERIALIZED VIEW user_engagement AS
-//         SELECT 
+//         SELECT
 //             user_id,
 //             COUNT(*) AS total_events,
 //             SUM(duration) AS total_duration,
@@ -136,10 +135,9 @@ func main() {
 //     return nil
 // }
 
-
 func initDB(db *sql.DB) error {
-    // Create events table without indexes first
-    _, err := db.Exec(`
+	// Create events table without indexes first
+	_, err := db.Exec(`
         CREATE TABLE IF NOT EXISTS events (
             id SERIAL PRIMARY KEY,
             user_id VARCHAR(255),
@@ -149,29 +147,29 @@ func initDB(db *sql.DB) error {
             timestamp TIMESTAMPTZ
         )
     `)
-    if err != nil {
-        return fmt.Errorf("failed to create events table: %v", err)
-    }
+	if err != nil {
+		return fmt.Errorf("failed to create events table: %v", err)
+	}
 
-    // Create indexes separately
-    indexes := []string{
-        "CREATE INDEX IF NOT EXISTS idx_events_user_id ON events(user_id)",
-        "CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp)",
-        "CREATE INDEX IF NOT EXISTS idx_events_action ON events(action)",
-    }
+	// Create indexes separately
+	indexes := []string{
+		"CREATE INDEX IF NOT EXISTS idx_events_user_id ON events(user_id)",
+		"CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp)",
+		"CREATE INDEX IF NOT EXISTS idx_events_action ON events(action)",
+	}
 
-    for _, indexSQL := range indexes {
-        _, err = db.Exec(indexSQL)
-        if err != nil {
-            log.Printf("Warning: Failed to create index: %v", err)
-        }
-    }
+	for _, indexSQL := range indexes {
+		_, err = db.Exec(indexSQL)
+		if err != nil {
+			log.Printf("Warning: Failed to create index: %v", err)
+		}
+	}
 
-    // Drop existing materialized view if it exists
-    db.Exec(`DROP MATERIALIZED VIEW IF EXISTS user_engagement`)
+	// Drop existing materialized view if it exists
+	db.Exec(`DROP MATERIALIZED VIEW IF EXISTS user_engagement`)
 
-    // Create materialized view
-    _, err = db.Exec(`
+	// Create materialized view
+	_, err = db.Exec(`
         CREATE MATERIALIZED VIEW user_engagement AS
         SELECT 
             user_id,
@@ -181,12 +179,25 @@ func initDB(db *sql.DB) error {
         FROM events
         GROUP BY user_id
     `)
-    if err != nil {
-        return fmt.Errorf("failed to create materialized view: %v", err)
-    }
+	if err != nil {
+		return fmt.Errorf("failed to create materialized view: %v", err)
+	}
 
-    log.Println("Database initialized successfully")
-    return nil
+	log.Println("Database initialized successfully")
+	return nil
+}
+
+func cors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func serveDashboard(w http.ResponseWriter, r *http.Request) {
